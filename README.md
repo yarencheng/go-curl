@@ -6,7 +6,7 @@
 
 - **High Parity**: Aims to support core curl flags and behaviors.
 - **WASM First**: Optimized for `js/wasm` and `wasip1/wasm` targets.
-- **In-Memory VFS**: Isolated filesystem operations for secure execution.
+- **In-Memory VFS**: Sandboxed virtual filesystem (WASM) that decouples operations from the native host disk.
 - **Structured Logging**: Deep observability with `zerolog`.
 
 ## Project Structure
