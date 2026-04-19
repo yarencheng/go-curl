@@ -13,8 +13,7 @@
 
 - `cmd/go-curl/`: Main entry point for native and WASM builds.
 - `cmd/go-bash-wasm/`: Specific WASM entry point for integration.
-- `internal/app/`: Core application logic and dependency injection.
-- `internal/commands/curl/`: `curl` command implementation.
+- `internal/`: Core application logic and command implementations.
 - `docs/`: Parity tracking and functional gap documentation.
 
 ## Prerequisites
