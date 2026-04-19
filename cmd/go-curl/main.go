@@ -6,7 +6,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
-	"github.com/yarencheng/go-curl/internal"
+	"github.com/yarencheng/go-curl/pkg/curl"
 )
 
 func main() {
@@ -17,7 +17,7 @@ func main() {
 	ctx := context.Background()
 	args := os.Args[1:]
 
-	cmd := internal.New(os.Stdin, os.Stdout, os.Stderr, log.Logger)
+	cmd := curl.New(os.Stdin, os.Stdout, os.Stderr, log.Logger)
 	if err := cmd.Execute(ctx, args); err != nil {
 		log.Error().Err(err).Msg("Command failed")
 		os.Exit(1)

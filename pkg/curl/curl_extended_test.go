@@ -1,4 +1,4 @@
-package internal_test
+package curl_test
 
 import (
 	"context"
@@ -12,13 +12,13 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/yarencheng/go-curl/internal"
+	"github.com/yarencheng/go-curl/pkg/curl"
 )
 
 func TestExecute_Errors(t *testing.T) {
 	stdin := strings.NewReader("")
 	logger := zerolog.Nop()
-	cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+	cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 
 	t.Run("no URL", func(t *testing.T) {
 		err := cmd.Execute(context.Background(), []string{})
@@ -76,7 +76,7 @@ func TestExecute_MockServer(t *testing.T) {
 
 	t.Run("include headers", func(t *testing.T) {
 		stdout := &strings.Builder{}
-		cmd := internal.New(stdin, stdout, io.Discard, logger)
+		cmd := curl.New(stdin, stdout, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-i", ts.URL})
 		assert.NoError(t, err)
 		assert.Contains(t, stdout.String(), "X-Custom-Resp: val")
@@ -85,7 +85,7 @@ func TestExecute_MockServer(t *testing.T) {
 
 	t.Run("verbose mode", func(t *testing.T) {
 		stderr := &strings.Builder{}
-		cmd := internal.New(stdin, io.Discard, stderr, logger)
+		cmd := curl.New(stdin, io.Discard, stderr, logger)
 		err := cmd.Execute(context.Background(), []string{"-v", ts.URL})
 		assert.NoError(t, err)
 		assert.Contains(t, stderr.String(), "* Connected to")
@@ -94,7 +94,7 @@ func TestExecute_MockServer(t *testing.T) {
 	})
 
 	t.Run("fail flag", func(t *testing.T) {
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-f", ts.URL + "/error"})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "error: 404")
@@ -106,7 +106,7 @@ func TestExecute_MockServer(t *testing.T) {
 		defer os.Remove(dataFile)
 
 		stdout := &strings.Builder{}
-		cmd := internal.New(stdin, stdout, io.Discard, logger)
+		cmd := curl.New(stdin, stdout, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-d", "@" + dataFile, "-i", ts.URL})
 		assert.NoError(t, err)
 		assert.Contains(t, stdout.String(), "X-Received-Body: true")
@@ -114,13 +114,13 @@ func TestExecute_MockServer(t *testing.T) {
 
 	t.Run("custom user agent and referer", func(t *testing.T) {
 		// Just verify it doesn't crash, we'd need to mock the server to check headers
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-A", "my-ua", "-e", "http://ref.com", ts.URL})
 		assert.NoError(t, err)
 	})
 
 	t.Run("basic auth", func(t *testing.T) {
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-u", "user:pass", ts.URL})
 		assert.NoError(t, err)
 		
@@ -131,7 +131,7 @@ func TestExecute_MockServer(t *testing.T) {
 	t.Run("cookie handling", func(t *testing.T) {
 		cookieJar := "test_jar.txt"
 		defer os.Remove(cookieJar)
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		
 		// Set cookie
 		err := cmd.Execute(context.Background(), []string{"-c", cookieJar, ts.URL + "/cookies"})
@@ -149,19 +149,19 @@ func TestExecute_MockServer(t *testing.T) {
 		os.WriteFile(cookieFile, []byte(content), 0644)
 		defer os.Remove(cookieFile)
 
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-b", cookieFile, ts.URL})
 		assert.NoError(t, err)
 	})
 
 	t.Run("cookie string", func(t *testing.T) {
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-b", "name1=val1;name2=val2", ts.URL})
 		assert.NoError(t, err)
 	})
 
 	t.Run("remote name failed", func(t *testing.T) {
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-O", ts.URL + "/"})
 		assert.Error(t, err)
 		assert.Contains(t, err.Error(), "could not determine remote name")
@@ -173,7 +173,7 @@ func TestExecute_MockServer(t *testing.T) {
 		os.WriteFile(headerFile, []byte(content), 0644)
 		defer os.Remove(headerFile)
 
-		cmd := internal.New(stdin, io.Discard, io.Discard, logger)
+		cmd := curl.New(stdin, io.Discard, io.Discard, logger)
 		err := cmd.Execute(context.Background(), []string{"-H", "@" + headerFile, ts.URL})
 		assert.NoError(t, err)
     })

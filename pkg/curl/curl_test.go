@@ -1,4 +1,4 @@
-package internal_test
+package curl_test
 
 import (
 	"context"
@@ -9,7 +9,7 @@ import (
 
 	"github.com/rs/zerolog"
 	"github.com/stretchr/testify/assert"
-	"github.com/yarencheng/go-curl/internal"
+	"github.com/yarencheng/go-curl/pkg/curl"
 )
 
 func TestNew(t *testing.T) {
@@ -18,7 +18,7 @@ func TestNew(t *testing.T) {
 	stderr := io.Discard
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	assert.NotNil(t, cmd)
 }
 
@@ -28,7 +28,7 @@ func TestExecute(t *testing.T) {
 	stderr := io.Discard
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	ctx := context.Background()
 	args := []string{"https://example.com"}
 
@@ -41,7 +41,7 @@ func TestExecute_Version(t *testing.T) {
 	stderr := &strings.Builder{}
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	ctx := context.Background()
 	args := []string{"--version"}
 
@@ -56,7 +56,7 @@ func TestExecute_Flags(t *testing.T) {
 	stderr := &strings.Builder{}
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	ctx := context.Background()
 	args := []string{"-s", "-v", "-i", "https://example.com"}
 
@@ -70,7 +70,7 @@ func TestExecute_Complex(t *testing.T) {
 	stderr := &strings.Builder{}
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	ctx := context.Background()
 	args := []string{"-X", "POST", "-H", "Content-Type: application/json", "-d", `{"key":"value"}`, "https://httpbin.org/post"}
 
@@ -95,7 +95,7 @@ func TestExecute_FileFlags(t *testing.T) {
 	stderr := &strings.Builder{}
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	ctx := context.Background()
 	args := []string{"-X", "POST", "-H", "@" + headerFile, "-d", "@" + dataFile, "https://httpbin.org/post"}
 
@@ -117,7 +117,7 @@ func TestExecute_CookiesAndUpload(t *testing.T) {
 	stderr := &strings.Builder{}
 	logger := zerolog.Nop()
 
-	cmd := internal.New(stdin, stdout, stderr, logger)
+	cmd := curl.New(stdin, stdout, stderr, logger)
 	ctx := context.Background()
 	
 	// Test upload
