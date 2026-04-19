@@ -1,0 +1,25 @@
+# Git
+.git
+.gitignore
+.gitmodules
+
+# Agents and AI settings
+.agents/
+.gemini/
+
+# Build artifacts
+*.wasm
+bin/
+dist/
+
+# Test artifacts
+*.out
+*.test
+coverage.txt
+
+# OS files
+.DS_Store
+
+# Docker files
+Dockerfile
+.dockerignore
