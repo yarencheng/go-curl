@@ -25,6 +25,10 @@ Status codes:
 - [ ] `-s, --silent`: Silent mode (upstream: `third_party/curl/src/tool_getparam.c:2679`)
 - [ ] `-L, --location`: Follow redirects (upstream: `third_party/curl/src/tool_getparam.c:2517`)
 - [ ] `--version`: Show version number and exit (upstream: `third_party/curl/src/tool_getparam.c:2750`)
+- [ ] Flag `--interface`: Not sandbox-friendly (requires binding to specific IP) (upstream: `third_party/curl/src/tool_getparam.c:1592`)
+- [ ] Flag `--dns-servers`: Browser/WASM sandbox limitation (upstream: `third_party/curl/src/tool_getparam.c:1469`)
+- [ ] Flag `--unix-socket`: OS-level socket control unavailable (upstream: `third_party/curl/src/tool_getparam.c:1907`)
+- [ ] Flag `--proxy`: Handled by browser environment, not programmatically via fetch (upstream: `third_party/curl/src/tool_getparam.c:2790`)
 
 ### Advanced Flags
 - [ ] `-A, --user-agent <name>`: Send User-Agent <name> to server (upstream: `third_party/curl/src/tool_getparam.c:2051`)
