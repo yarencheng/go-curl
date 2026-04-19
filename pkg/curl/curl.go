@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"io"
+	"net"
 	"net/http"
 	"net/http/cookiejar"
 	"os"
@@ -58,6 +59,8 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	cookie := fs.StringP("cookie", "b", "", "Send cookies from string/file")
 	cookieJar := fs.StringP("cookie-jar", "c", "", "Write cookies to <filename> after operation")
 	uploadFile := fs.StringP("upload-file", "T", "", "Transfer local FILE to destination")
+	ipv4 := fs.BoolP("ipv4", "4", false, "Resolve names to IPv4 addresses")
+	ipv6 := fs.BoolP("ipv6", "6", false, "Resolve names to IPv6 addresses")
 
 	if err := fs.Parse(args); err != nil {
 		if err == pflag.ErrHelp {
@@ -135,7 +138,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	if *userAgent != "" {
 		req.Header.Set("User-Agent", *userAgent)
 	} else {
-		req.Header.Set("User-Agent", "go-curl/"+version)
+		req.Header.Set("User-Agent", "curl/"+version)
 	}
 
 	if req.Header.Get("Accept") == "" {
@@ -157,6 +160,14 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 
 	tr := &http.Transport{
 		DisableCompression: true,
+		DialContext: func(ctx context.Context, network, addr string) (net.Conn, error) {
+			if *ipv4 {
+				network = "tcp4"
+			} else if *ipv6 {
+				network = "tcp6"
+			}
+			return (&net.Dialer{}).DialContext(ctx, network, addr)
+		},
 	}
 	client := &http.Client{
 		Transport: tr,

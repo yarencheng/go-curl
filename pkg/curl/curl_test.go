@@ -64,6 +64,26 @@ func TestExecute_Flags(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestExecute_IPFlags(t *testing.T) {
+	stdin := strings.NewReader("")
+	stdout := &strings.Builder{}
+	stderr := &strings.Builder{}
+	logger := zerolog.Nop()
+
+	cmd := curl.New(stdin, stdout, stderr, logger)
+	ctx := context.Background()
+
+	// Test -4
+	args4 := []string{"-4", "https://example.com"}
+	err := cmd.Execute(ctx, args4)
+	assert.NoError(t, err)
+
+	// Test -6
+	args6 := []string{"-6", "https://example.com"}
+	err = cmd.Execute(ctx, args6)
+	assert.NoError(t, err)
+}
+
 func TestExecute_Complex(t *testing.T) {
 	stdin := strings.NewReader("")
 	stdout := &strings.Builder{}
