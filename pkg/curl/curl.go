@@ -7,12 +7,12 @@ import (
 	"net"
 	"net/http"
 	"net/http/cookiejar"
-	"os"
 	"path"
 	"strings"
 	"time"
 
 	"github.com/rs/zerolog"
+	"github.com/spf13/afero"
 	"github.com/spf13/pflag"
 )
 
@@ -24,15 +24,17 @@ type Command struct {
 	stdout io.Writer
 	stderr io.Writer
 	logger zerolog.Logger
+	fs     afero.Fs
 }
 
-// New creates a new curl Command with the provided I/O streams and default logger.
-func New(stdin io.Reader, stdout io.Writer, stderr io.Writer, logger zerolog.Logger) *Command {
+// New creates a new curl Command with the provided I/O streams, default logger, and file system.
+func New(stdin io.Reader, stdout io.Writer, stderr io.Writer, logger zerolog.Logger, fs afero.Fs) *Command {
 	return &Command{
 		stdin:  stdin,
 		stdout: stdout,
 		stderr: stderr,
 		logger: logger,
+		fs:     fs,
 	}
 }
 
@@ -93,7 +95,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	if *data != "" {
 		if strings.HasPrefix(*data, "@") {
 			fileName := (*data)[1:]
-			f, err := os.Open(fileName)
+			f, err := c.fs.Open(fileName)
 			if err != nil {
 				return fmt.Errorf("failed to open data file %s: %w", fileName, err)
 			}
@@ -112,7 +114,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	for _, h := range *headers {
 		if strings.HasPrefix(h, "@") {
 			fileName := h[1:]
-			content, err := os.ReadFile(fileName)
+			content, err := afero.ReadFile(c.fs, fileName)
 			if err != nil {
 				return fmt.Errorf("failed to read header file %s: %w", fileName, err)
 			}
@@ -190,7 +192,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 			client.Jar.SetCookies(u, cookies)
 		} else {
 			// filename
-			content, err := os.ReadFile(*cookie)
+			content, err := afero.ReadFile(c.fs, *cookie)
 			if err == nil {
 				// Simple parsing of cookie file (Netscape format is complex, doing simple for now)
 				lines := strings.Split(string(content), "\n")
@@ -216,7 +218,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 
 	if *uploadFile != "" {
 		method = http.MethodPut
-		f, err := os.Open(*uploadFile)
+		f, err := c.fs.Open(*uploadFile)
 		if err != nil {
 			return fmt.Errorf("failed to open upload file %s: %w", *uploadFile, err)
 		}
@@ -292,7 +294,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 
 	var out io.Writer = c.stdout
 	if *output != "" {
-		f, err := os.Create(*output)
+		f, err := c.fs.Create(*output)
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
@@ -303,7 +305,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 		if fileName == "/" || fileName == "." || fileName == "" {
 			return fmt.Errorf("could not determine remote name from URL")
 		}
-		f, err := os.Create(fileName)
+		f, err := c.fs.Create(fileName)
 		if err != nil {
 			return fmt.Errorf("failed to create output file: %w", err)
 		}
@@ -335,7 +337,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 			// domain, flag, path, secure, expiration, name, value
 			fmt.Fprintf(&sb, "%s\tTRUE\t%s\tFALSE\t0\t%s\t%s\n", req.URL.Host, c.Path, c.Name, c.Value)
 		}
-		err := os.WriteFile(*cookieJar, []byte(sb.String()), 0644)
+		err := afero.WriteFile(c.fs, *cookieJar, []byte(sb.String()), 0644)
 		if err != nil {
 			return fmt.Errorf("failed to write cookie jar: %w", err)
 		}

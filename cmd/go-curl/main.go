@@ -17,7 +17,7 @@ func main() {
 	ctx := context.Background()
 	args := os.Args[1:]
 
-	cmd := curl.New(os.Stdin, os.Stdout, os.Stderr, log.Logger)
+	cmd := curl.New(os.Stdin, os.Stdout, os.Stderr, log.Logger, curl.DefaultFs())
 	if err := cmd.Execute(ctx, args); err != nil {
 		log.Error().Err(err).Msg("Command failed")
 		os.Exit(1)
