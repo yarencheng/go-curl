@@ -41,7 +41,7 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	fs.SetOutput(c.stderr)
 
 	showVersion := fs.Bool("version", false, "Show version number and exit")
-	silent := fs.BoolP("silent", "s", false, "Silent mode")
+	_ = fs.BoolP("silent", "s", false, "Silent mode")
 	verbose := fs.BoolP("verbose", "v", false, "Make the operation more talkative")
 	include := fs.BoolP("include", "i", false, "Include protocol response headers in the output")
 	request := fs.StringP("request", "X", "", "Specify request command to use")
@@ -60,6 +60,9 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	uploadFile := fs.StringP("upload-file", "T", "", "Transfer local FILE to destination")
 
 	if err := fs.Parse(args); err != nil {
+		if err == pflag.ErrHelp {
+			return nil
+		}
 		return err
 	}
 
@@ -131,7 +134,14 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 
 	if *userAgent != "" {
 		req.Header.Set("User-Agent", *userAgent)
+	} else {
+		req.Header.Set("User-Agent", "go-curl/"+version)
 	}
+
+	if req.Header.Get("Accept") == "" {
+		req.Header.Set("Accept", "*/*")
+	}
+
 	if *referer != "" {
 		req.Header.Set("Referer", *referer)
 	}
@@ -145,7 +155,12 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 		}
 	}
 
-	client := &http.Client{}
+	tr := &http.Transport{
+		DisableCompression: true,
+	}
+	client := &http.Client{
+		Transport: tr,
+	}
 	jar, _ := cookiejar.New(nil)
 	client.Jar = jar
 
@@ -220,14 +235,48 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 	}
 
 	if *verbose {
-		fmt.Fprintf(c.stderr, "* Connected to %s\n", url)
+		hostname := req.URL.Hostname()
+		port := req.URL.Port()
+		if port == "" {
+			if req.URL.Scheme == "https" {
+				port = "443"
+			} else {
+				port = "80"
+			}
+		}
+		fmt.Fprintf(c.stderr, "*   Trying %s:%s...\n", hostname, port)
+		fmt.Fprintf(c.stderr, "* Connected to %s (%s) port %s (#0)\n", hostname, hostname, port)
 		fmt.Fprintf(c.stderr, "> %s %s %s\n", req.Method, req.URL.RequestURI(), req.Proto)
+
+		hostHeader := req.Host
+		if hostHeader == "" {
+			hostHeader = req.URL.Host
+		}
+		fmt.Fprintf(c.stderr, "> Host: %s\n", hostHeader)
+		if ua := req.Header.Get("User-Agent"); ua != "" {
+			fmt.Fprintf(c.stderr, "> User-Agent: %s\n", ua)
+		}
+		if acc := req.Header.Get("Accept"); acc != "" {
+			fmt.Fprintf(c.stderr, "> Accept: %s\n", acc)
+		}
+
 		for name, values := range req.Header {
+			if name == "User-Agent" || name == "Accept" || name == "Host" {
+				continue
+			}
 			for _, value := range values {
 				fmt.Fprintf(c.stderr, "> %s: %s\n", name, value)
 			}
 		}
 		fmt.Fprintln(c.stderr, ">")
+
+		fmt.Fprintf(c.stderr, "< %s %s\n", resp.Proto, resp.Status)
+		for name, values := range resp.Header {
+			for _, value := range values {
+				fmt.Fprintf(c.stderr, "< %s: %s\n", name, value)
+			}
+		}
+		fmt.Fprintln(c.stderr, "<")
 	}
 
 	var out io.Writer = c.stdout
@@ -261,13 +310,9 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 		fmt.Fprintln(out)
 	}
 
-	if !*silent {
-		_, err = io.Copy(out, resp.Body)
-		if err != nil {
-			return fmt.Errorf("failed to read response body: %w", err)
-		}
-	} else {
-		_, _ = io.Copy(io.Discard, resp.Body)
+	_, err = io.Copy(out, resp.Body)
+	if err != nil {
+		return fmt.Errorf("failed to read response body: %w", err)
 	}
 
 	if *cookieJar != "" {
@@ -283,6 +328,10 @@ func (c *Command) Execute(ctx context.Context, args []string) error {
 		if err != nil {
 			return fmt.Errorf("failed to write cookie jar: %w", err)
 		}
+	}
+
+	if *verbose {
+		fmt.Fprintf(c.stderr, "* Connection #0 to host %s left intact\n", req.URL.Hostname())
 	}
 
 	return nil
