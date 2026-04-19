@@ -1,4 +1,4 @@
-package curl_test
+package internal_test
 
 import (
 	"testing"

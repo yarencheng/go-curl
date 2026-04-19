@@ -1,4 +1,4 @@
-package curl
+package internal
 
 import (
 	"context"
