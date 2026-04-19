@@ -39,4 +39,4 @@ WORKDIR /app
 COPY --from=builder /out/main.wasm ./main.wasm
 
 # 3. Run web assembly with Wasmtime
-CMD ["wasmtime", "run", "main.wasm"]
+ENTRYPOINT ["wasmtime", "run", "main.wasm"]
